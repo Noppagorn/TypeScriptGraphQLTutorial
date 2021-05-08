@@ -2,13 +2,14 @@ import { __password_db__, __prod__, __username_db__ } from "./constants";
 import { Post } from "./entities/Post";
 import { MikroORM } from "@mikro-orm/core";
 import path from 'path';
+import { User } from "./entities/User";
 console.log("dirname: ", __dirname)
 export default {
         migrations : {
             path: path.join(__dirname,'./migrations'), // path to the folder with migrations
             pattern: /^[\w-]+\d+\.[tj]s$/, // regex pattern for the migration files  [tj] is t or j (typescript or javascript)
         },
-        entities : [Post],
+        entities : [Post,User],
         dbName : 'lireddit',
         user : __username_db__,
         password : __password_db__,
