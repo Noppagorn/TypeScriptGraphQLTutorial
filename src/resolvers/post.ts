@@ -27,4 +27,28 @@ export class PostResolver{
         await em.persistAndFlush(post)
         return post
     }
+    @Mutation(() => Post, {nullable : true}) // Mutation for edit insert update data
+    async updatePost(
+        @Arg('id') id: number,
+        @Arg('title', () => String, {nullable : true}) title : string,
+        @Ctx() {em} : MyContext
+    ) : Promise<Post | null> { // this is type script type
+        const post = await em.findOne(Post,{id});
+        if (!post){
+            return null;
+        }
+        if (typeof title !== 'undefined'){
+            post.title = title
+            await em.persistAndFlush(post);
+        }
+        return post
+    }
+    @Mutation(() => Boolean) // Mutation for edit insert update data
+    async deletePost(
+        @Arg('id') id: number,
+        @Ctx() {em} : MyContext
+    ) : Promise<boolean> { // this is type script type
+        await em.nativeDelete(Post,{id})
+        return true
+    }
 }
