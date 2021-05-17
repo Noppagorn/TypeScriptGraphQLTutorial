@@ -16,7 +16,7 @@ import redis from 'redis';
 import session from 'express-session'
 import connectRedis from 'connect-redis'
 import { MyContext } from "./types";
-
+import cors from 'cors'
 
 const main = async() =>{
     const orm = await MikroORM.init(microConfig);
@@ -27,7 +27,11 @@ const main = async() =>{
 
     const RedisStore = connectRedis(session)
     const redisClient = redis.createClient()
-
+    app.use(
+      cors({
+        origin: 'http://localhost:3000',
+        credentials: true,
+    }))
     app.use( // must run before middleware
         session({
             name: 'qid', // name of cokkie
@@ -55,7 +59,10 @@ const main = async() =>{
         context: ({ req,res }):MyContext => ({em: orm.em, req,res})
     })
 
-    apolloServer.applyMiddleware({app});  // create graph QL endpoint on express
+    apolloServer.applyMiddleware({
+        app, 
+        cors: false,
+    });  // create graph QL endpoint on express
     // app.get("/",(_,res) => { // _ ignore variable
     // thist is create end point 
     //     res.send("hello");
