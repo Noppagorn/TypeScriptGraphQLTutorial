@@ -2,7 +2,7 @@
 import "reflect-metadata";
 
 import { MikroORM } from "@mikro-orm/core";
-import { __prod__,__username_db__,__password_db__ } from "./constants";
+import { __prod__,__username_db__,__password_db__, COOKIE_NAME } from "./constants";
 import { Post } from "./entities/Post"
 import microConfig from "./mikro-orm.config"
 import { ApolloServer } from "apollo-server-express"
@@ -12,21 +12,26 @@ import { HelloResolver } from "./resolvers/hello";
 import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
 
-import redis from 'redis';
+import Redis from 'ioredis';
 import session from 'express-session'
 import connectRedis from 'connect-redis'
 import { MyContext } from "./types";
 import cors from 'cors'
+import { sendEmail } from "./utils/sendEmail";
+import { User } from "./entities/User";
 
 const main = async() =>{
+    // sendEmail("bob@bob.com","hello there")
     const orm = await MikroORM.init(microConfig);
+    // await orm.em.nativeDelete(User,{})
     await orm.getMigrator().up(); // run migration
 
     const app = express();
 
 
     const RedisStore = connectRedis(session)
-    const redisClient = redis.createClient()
+    const redis = new Redis();
+
     app.use(
       cors({
         origin: 'http://localhost:3000',
@@ -34,9 +39,9 @@ const main = async() =>{
     }))
     app.use( // must run before middleware
         session({
-            name: 'qid', // name of cokkie
+            name: COOKIE_NAME, // name of cokkie
             store: new RedisStore({
-                client : redisClient,
+                client : redis,
                 disableTouch : true,
             }),
             cookie:{
@@ -56,7 +61,7 @@ const main = async() =>{
             resolvers:[HelloResolver , PostResolver,UserResolver],
             validate : false,
         }),
-        context: ({ req,res }):MyContext => ({em: orm.em, req,res})
+        context: ({ req,res }):MyContext => ({em: orm.em, req,res, redis})
     })
 
     apolloServer.applyMiddleware({

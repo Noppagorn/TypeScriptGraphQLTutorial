@@ -21,6 +21,10 @@ export class User{
     @Property({type : 'text',unique: true})
     username!: string;
 
+    @Field()
+    @Property({type : 'text',unique: true})
+    email!: string;
+
     // remove Field() poperty because not allow to select this property
     @Property({type : 'text'})
     password!: string;
