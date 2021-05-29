@@ -1,10 +1,7 @@
 
 import "reflect-metadata";
-
-import { MikroORM } from "@mikro-orm/core";
 import { __prod__,__username_db__,__password_db__, COOKIE_NAME } from "./constants";
 import { Post } from "./entities/Post"
-import microConfig from "./mikro-orm.config"
 import { ApolloServer } from "apollo-server-express"
 import express from "express"
 import {buildSchema} from 'type-graphql';
@@ -19,12 +16,25 @@ import { MyContext } from "./types";
 import cors from 'cors'
 import { sendEmail } from "./utils/sendEmail";
 import { User } from "./entities/User";
+import { createConnection } from 'typeorm'
 
 const main = async() =>{
+    const conn = await createConnection({
+        type: 'postgres',
+        database: 'lireddit2',
+        username: __username_db__,
+        password: __password_db__,
+        logging: true,
+        synchronize: true, 
+        entities : [Post, User]
+    });
+
+    await Post.delete({}) // delete all Posts when add column or edite something in data base
+
     // sendEmail("bob@bob.com","hello there")
-    const orm = await MikroORM.init(microConfig);
+    // const orm = await MikroORM.init(microConfig);
     // await orm.em.nativeDelete(User,{})
-    await orm.getMigrator().up(); // run migration
+    // await orm.getMigrator().up(); // run migration
 
     const app = express();
 
@@ -61,7 +71,7 @@ const main = async() =>{
             resolvers:[HelloResolver , PostResolver,UserResolver],
             validate : false,
         }),
-        context: ({ req,res }):MyContext => ({em: orm.em, req,res, redis})
+        context: ({ req,res }):MyContext => ({req,res, redis})
     })
 
     apolloServer.applyMiddleware({
